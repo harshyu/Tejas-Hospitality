@@ -15,7 +15,7 @@ jobs:
         node-version: [20]
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -37,17 +37,18 @@ jobs:
       - name: Install dependencies (clean)
         run: npm ci
 
-      - name: Prepare native modules for Electron (install-app-deps)
+      - name: Prepare native modules for Electron
         run: npx electron-builder install-app-deps --arch x64
 
-      - name: Rebuild native modules for Electron (fallback)
+      - name: Rebuild native modules (fallback)
         run: npx electron-rebuild --force --arch x64
-        # optional; keeps it in case a package still needs rebuild
 
-      - name: Build Electron app (Windows)
+      - name: Build Windows installer
+        # NOTE: if you do not want signing now, ensure CSC_LINK/CSC_KEY_PASSWORD are empty below.
         env:
           CSC_LINK: ${{ secrets.CSC_LINK || '' }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD || '' }}
+          DEBUG: electron-builder
         run: npm run dist
 
       - name: Upload Windows distributable
