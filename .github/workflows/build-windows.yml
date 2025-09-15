@@ -44,10 +44,13 @@ jobs:
         run: npx electron-rebuild --force --arch x64
 
       - name: Build Windows installer
-        # NOTE: if you do not want signing now, ensure CSC_LINK/CSC_KEY_PASSWORD are empty below.
         env:
-          CSC_LINK: ${{ secrets.CSC_LINK || '' }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD || '' }}
+          # Force empty values so electron-builder will NOT attempt code signing in CI.
+          # If you later want to sign builds, replace these with your repo secrets:
+          # CSC_LINK: ${{ secrets.CSC_LINK }}
+          # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_LINK: ''
+          CSC_KEY_PASSWORD: ''
           DEBUG: electron-builder
         run: npm run dist
 
