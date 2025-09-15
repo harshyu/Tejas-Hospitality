@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Restaurant Billing - MVP</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data:;">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header><h1>Restaurant Billing</h1></header>
+    <main>
+      <section id="menu">
+        <h2>Menu</h2>
+        <div id="menu-list"></div>
+      </section>
+      <section id="order">
+        <h2>Order</h2>
+        <div id="cart"></div>
+        <div id="totals">
+          <div>Subtotal: <span id="subtotal">0</span></div>
+          <div>Tax (5%): <span id="tax">0</span></div>
+          <div>Total: <span id="total">0</span></div>
+        </div>
+        <div id="actions">
+          <button id="btn-save">Save Invoice</button>
+          <button id="btn-export">Export PDF</button>
+          <button id="btn-clear">Clear</button>
+        </div>
+      </section>
+    </main>
+    <footer>Simple MVP – skip advanced features</footer>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>
