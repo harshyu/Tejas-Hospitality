@@ -1,37 +1,53 @@
-jobs:
 name: Build Electron App (Windows)
 
-
+on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
- 
+jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        node-version: [20]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ matrix.node-version }}
 
-      - name: Install Python
-        uses: actions/setup-python@v5
+      - name: Cache npm & electron cache
+        uses: actions/cache@v4
         with:
-          python-version: '3.x'
+          path: |
+            ~/.npm
+            ~/.cache/electron
+            node_modules
+          key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ matrix.node-version }}-
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies (clean)
+        run: npm ci
 
-      - name: Rebuild native modules for Electron
-        run: npx electron-rebuild
+      - name: Prepare native modules for Electron (install-app-deps)
+        run: npx electron-builder install-app-deps --arch x64
 
-      - name: Build Electron app
+      - name: Rebuild native modules for Electron (fallback)
+        run: npx electron-rebuild --force --arch x64
+        # optional; keeps it in case a package still needs rebuild
+
+      - name: Build Electron app (Windows)
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK || '' }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD || '' }}
         run: npm run dist
 
       - name: Upload Windows distributable
@@ -39,5 +55,3 @@ name: Build Electron App (Windows)
         with:
           name: windows-build
           path: dist/*
-
-
