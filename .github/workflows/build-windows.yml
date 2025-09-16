@@ -56,4 +56,16 @@ jobs:
         run: npm ci
 
       - name: Prepare native modules for Electron
-        run: npx electron-builder install-app-deps --a
+        run: npx electron-builder install-app-deps --arch x64
+
+      - name: Rebuild native modules (fallback)
+        run: npx electron-rebuild --force --arch x64
+
+      - name: Build Windows installer (no signing)
+        run: npm run dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: dist/*
