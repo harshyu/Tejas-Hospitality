@@ -7,7 +7,72 @@ on:
 
 jobs:
   build:
+    runs-on: windows-latestname: Build Electron App (Windows) - job-level no-sign
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
     runs-on: windows-latest
+
+    # Force empty signing envs for the whole job (applies to all steps)
+    env:
+      CSC_LINK: ''
+      CSC_KEY_PASSWORD: ''
+      WIN_CSC_LINK: ''
+      WIN_CSC_KEY_PASSWORD: ''
+      DEBUG: electron-builder
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Show key environment indicators (debug)
+        run: |
+          echo "WIN_CSC_LINK='${WIN_CSC_LINK-<not-set>}'"
+          echo "CSC_LINK='${CSC_LINK-<not-set>}'"
+          echo "WIN_CSC_KEY_PASSWORD='${WIN_CSC_KEY_PASSWORD-<not-set>}'"
+          echo "CSC_KEY_PASSWORD='${CSC_KEY_PASSWORD-<not-set>}'"
+          echo "GITHUB_REPOSITORY=${GITHUB_REPOSITORY}"
+          echo "GITHUB_WORKFLOW=${GITHUB_WORKFLOW}"
+
+      - name: Cache npm & electron cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            ~/.cache/electron
+            node_modules
+          key: ${{ runner.os }}-node-20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-20-
+
+      - name: Install dependencies (clean)
+        run: npm ci
+
+      - name: Prepare native modules for Electron
+        run: npx electron-builder install-app-deps --arch x64
+
+      - name: Rebuild native modules (fallback)
+        run: npx electron-rebuild --force --arch x64
+
+      - name: Build Windows installer (no signing)
+        run: npm run dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: dist/*
+
     strategy:
       matrix:
         node-version: [20]
