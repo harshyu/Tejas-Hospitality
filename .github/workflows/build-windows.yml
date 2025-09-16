@@ -1,4 +1,4 @@
-name: Build Electron App (Windows) - job-level no-sign
+name: Build Electron App (Windows) - unset signing envs, debug
 
 on:
   push:
@@ -8,18 +8,9 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-
-    # Force empty signing envs for the whole job (applies to all steps)
-    env:
-      CSC_LINK: ''
-      CSC_KEY_PASSWORD: ''
-      WIN_CSC_LINK: ''
-      WIN_CSC_KEY_PASSWORD: ''
-      DEBUG: electron-builder
-
     strategy:
       matrix:
-        node-version: [20]
+        node-version: ['20']
 
     steps:
       - name: Checkout
@@ -30,16 +21,22 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Show key environment indicators (debug)
+      - name: Show env before clearing (debug)
         run: |
-          echo "=== ENV DEBUG START ==="
-          echo "WIN_CSC_LINK='${WIN_CSC_LINK-<not-set>}'"
-          echo "CSC_LINK='${CSC_LINK-<not-set>}'"
-          echo "WIN_CSC_KEY_PASSWORD='${WIN_CSC_KEY_PASSWORD-<not-set>}'"
-          echo "CSC_KEY_PASSWORD='${CSC_KEY_PASSWORD-<not-set>}'"
-          echo "GITHUB_REPOSITORY=${GITHUB_REPOSITORY}"
-          echo "GITHUB_WORKFLOW=${GITHUB_WORKFLOW}"
-          echo "=== ENV DEBUG END ==="
+          echo "BEFORE_CLEAR: WIN_CSC_LINK='${WIN_CSC_LINK-<not-set>}'"
+          echo "BEFORE_CLEAR: CSC_LINK='${CSC_LINK-<not-set>}'"
+
+      - name: Clear signing envs for the rest of the job
+        # Ensure these are empty for all subsequent steps by writing to GITHUB_ENV
+        run: |
+          echo "WIN_CSC_LINK=" >> $GITHUB_ENV
+          echo "CSC_LINK=" >> $GITHUB_ENV
+          echo "WIN_CSC_KEY_PASSWORD=" >> $GITHUB_ENV
+          echo "CSC_KEY_PASSWORD=" >> $GITHUB_ENV
+      - name: Show env after clearing (debug)
+        run: |
+          echo "AFTER_CLEAR: WIN_CSC_LINK='${WIN_CSC_LINK-<not-set>}'"
+          echo "AFTER_CLEAR: CSC_LINK='${CSC_LINK-<not-set>}'"
 
       - name: Cache npm & electron cache
         uses: actions/cache@v4
@@ -52,7 +49,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-${{ matrix.node-version }}-
 
-      - name: Install dependencies (clean)
+      - name: Install dependencies
         run: npm ci
 
       - name: Prepare native modules for Electron
@@ -61,8 +58,10 @@ jobs:
       - name: Rebuild native modules (fallback)
         run: npx electron-rebuild --force --arch x64
 
-      - name: Build Windows installer (no signing)
-        run: npm run dist
+      - name: Build Windows installer (no signing, no publish)
+        run: npm run dist -- --publish=never
+        env:
+          DEBUG: electron-builder
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
