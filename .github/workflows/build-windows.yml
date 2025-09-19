@@ -27,7 +27,6 @@ jobs:
           echo "BEFORE_CLEAR: CSC_LINK='${CSC_LINK-<not-set>}'"
 
       - name: Clear signing envs for the rest of the job
-        # Ensure these are empty for all subsequent steps by writing to GITHUB_ENV
         run: |
           echo "WIN_CSC_LINK=" >> $GITHUB_ENV
           echo "CSC_LINK=" >> $GITHUB_ENV
